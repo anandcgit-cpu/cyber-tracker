@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Cyber Tracker</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Cyber Tracker">
+<meta name="theme-color" content="#534AB7">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.png">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#f5f5f0;padding:env(safe-area-inset-top,16px) 16px env(safe-area-inset-bottom,16px);color:#1a1a18;min-height:100vh}
+#app{max-width:720px;margin:0 auto;background:#fff;border-radius:16px;padding:20px;border:0.5px solid #d3d1c7}
+@media(max-width:480px){body{padding:12px 10px}#app{border-radius:12px;padding:14px}}
+h1{font-size:18px;font-weight:500;margin-bottom:4px;color:#1a1a18}
+.subtitle{font-size:12px;color:#5f5e5a;margin-bottom:16px}
+.top-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.phase-pill{padding:5px 12px;border-radius:99px;font-size:11px;font-weight:500;cursor:pointer;border:1.5px solid transparent;transition:all .15s;white-space:nowrap}
+.phase-pill.active{border-color:currentColor}
+.p1{background:#EEEDFE;color:#3C3489}.p2{background:#E1F5EE;color:#085041}
+.p3{background:#FAEEDA;color:#633806}.p4{background:#FAECE7;color:#4A1B0C}
+.p5{background:#E6F1FB;color:#042C53}.p6{background:#FBEAF0;color:#72243E}
+.phase-hero{border-radius:12px;padding:14px 16px;margin-bottom:14px;border:1px solid transparent}
+.phase-hero-title{font-size:15px;font-weight:500;margin-bottom:2px}
+.phase-hero-meta{font-size:12px;opacity:.75;margin-bottom:10px}
+.stats-row{display:flex;gap:8px;flex-wrap:wrap}
+.stat-chip{font-size:11px;padding:3px 9px;border-radius:99px;font-weight:500}
+.weeks-grid{display:flex;flex-direction:column;gap:6px;margin-top:14px}
+.week-block{border-radius:10px;overflow:hidden;border:0.5px solid #d3d1c7}
+.week-header-row{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;cursor:pointer;background:#f5f5f0;user-select:none}
+.week-title{font-size:12px;font-weight:500;color:#1a1a18}
+.week-subtitle{font-size:11px;color:#5f5e5a}
+.week-toggle{font-size:11px;color:#888780}
+.days-list{display:none;flex-direction:column}
+.days-list.open{display:flex}
+.day-item{display:grid;grid-template-columns:38px 1fr auto;gap:8px;align-items:start;padding:8px 12px;border-top:0.5px solid #e8e6e0;transition:opacity .2s}
+.day-label{font-size:11px;font-weight:500;color:#5f5e5a;padding-top:2px}
+.day-topic{font-size:12px;font-weight:500;color:#1a1a18;margin-bottom:2px}
+.day-detail{font-size:11px;color:#5f5e5a;line-height:1.5}
+.day-link{color:#185FA5;font-size:11px;text-decoration:none}
+.day-link:hover{text-decoration:underline}
+.done-btn{font-size:10px;padding:3px 8px;border-radius:99px;border:0.5px solid #b4b2a9;background:transparent;cursor:pointer;color:#5f5e5a;white-space:nowrap;transition:all .15s;margin-top:2px}
+.done-btn.done{background:#eaf3de;color:#3B6D11;border-color:#639922}
+.progress-wrap{margin-bottom:16px}
+.progress-label{font-size:12px;color:#5f5e5a;margin-bottom:5px;display:flex;justify-content:space-between}
+.progress-track{background:#f5f5f0;border-radius:99px;height:5px;overflow:hidden}
+.progress-fill{height:100%;border-radius:99px;transition:width .4s}
+@media(prefers-color-scheme:dark){
+  body{background:#1a1a18;color:#e8e6e0}
+  #app{background:#2c2c2a;border-color:#444441}
+  .week-header-row,.progress-track{background:#3d3d3a}
+  .day-item{border-top-color:#444441}
+  .week-block{border-color:#444441}
+  .week-title,.day-topic{color:#e8e6e0}
+  .week-subtitle,.day-detail,.day-label,.progress-label{color:#9c9a92}
+  .done-btn{color:#9c9a92;border-color:#5f5e5a}
+  h1{color:#e8e6e0}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+const PHASES=[
+{id:'p1',label:'Phase 1',name:'Network+ N10-009 — Part 1',months:'Month 1–2 (Weeks 1–8)',color:'#534AB7',bg:'#EEEDFE',tc:'#3C3489',
+stats:['87 videos total','~13 hrs content','2 videos/day','Sections 1–3'],
+weeks:[
+{label:'Week 1',topic:'OSI model, Networking devices & functions, Cloud basics',days:[
+{d:'Mon',t:'How to pass N10-009 + OSI Model (13m)',det:'Watch intro + OSI video. Draw OSI layers from memory.',url:'https://www.professormesser.com/network-plus/n10-009/n10-009-video/n10-009-training-course/'},
+{d:'Tue',t:'Networking Devices (14m)',det:'Watch video. List every device + its OSI layer.',url:'https://www.professormesser.com/network-plus/n10-009/n10-009-video/networking-devices-n10-009/'},
+{d:'Wed',t:'Networking Functions (13m)',det:'Watch video. Note VPN, CDN, QoS differences.',url:'https://www.professormesser.com/network-plus/n10-009/n10-009-video/networking-functions-n10-009/'},
+{d:'Thu',t:'Designing the Cloud + Cloud Models',det:'Watch both videos. Compare IaaS/PaaS/SaaS with examples.',url:'https://www.professormesser.com/network-plus/n10-009/n10-009-video/n10-009-training-course/'},
+{d:'Fri',t:'Review Week 1 + SubnettingPractice.com',det:'Redo notes from memory. Do 10 subnetting questions.',url:'https://www.subnettingpractice.com'},
+]},
+{label:'Week 2',topic:'Ports & Protocols, IP addressing, Routing',days:[
+{d:'Mon',t:'Intro to IP + Common Ports & Protocols',det:'Watch both. Create a cheat sheet of top 20 ports.',url:'https://www.professormesser.com/network-plus/n10-009/n10-009-video/n10-009-training-course/'},
+{d:'Tue',t:'IP Addressing + Subnetting',det:'Watch videos. Practise 10 subnets on paper.',url:'https://www.subnettingpractice.com'},
+{d:'Wed',t:'IPv6 + NAT',det:'Watch videos. Compare IPv4 vs IPv6 addressing.',url:'https://www.professormesser.com/network-plus/n10-009/n10-009-video/n10-009-training-course/'},
+{d:'Thu',t:'Routing Technologies',det:'Watch video. Understand static vs dynamic routing, RIP, OSPF, BGP.',url:'https://www.professormesser.com/network-plus/n10-009/n10-009-video/n10-009-training-course/'},
+{d:'Fri',t:'Review + SubnettingPractice.com',det:'Practise 20 subnetting questions. Revise port list.',url:'https://www.subnettingpractice.com'},
+]},
+{label:'Week 3',topic:'Ethernet, Cabling, Physical layer',days:[
+{d:'Mon',t:'Copper Cabling + Optical Fiber',det:'Watch videos. Note Cat5e/Cat6/Cat6a differences.',url:'https://www.professormesser.com/network-plus/n10-009/n10-009-video/n10-009-training-course/'},
+{d:'Tue',t:'Network Connectors + Transceivers',det:'Watch videos. Identify RJ45, SFP, GBIC.',url:'https://www.professormesser.com/network-plus/n10-009/n10-009-video/n10-009-training-course/'},
+{d:'Wed',t:'Ethernet Standards + Cable Management',det:'Watch videos. Note 1000BASE-T, 10GBASE-T speeds.',url:'https://www.professormesser.com/network-plus/n10-009/n10-009-video/n10-009-training-course/'},
+{d:'Thu',t:'Network Topologies + WAN Termination',det:'Watch videos. Draw star, mesh, hybrid topologies.',url:'https://www.professormesser.com/network-plus/n10-009/n10-009-video/n10-009-training-course/'},
+{d:'Fri',t:'Review Weeks 1–3 + OverTheWire Bandit L0–3',det:'Consolidate notes. Start Linux CLI via Bandit.',url:'https://overthewire.org/wargames/bandit/'},
+]},
+{label:'Week 4',topic:'Switching, VLANs, Wireless',days:[
+{d:'Mon',t:'Switching + VLANs',det:'Watch videos. Understand trunk vs access ports.',url:'https://www.professormesser.com/network-plus/n10-009/n10-009-video/n10-009-training-course/'},
+{d:'Tue',t:'Spanning Tree + Link Aggregation',det:'Watch videos. Note STP port states.',url:'https://www.professormesser.com/network-plus/n10-009/n10-009-video/n10-009-training-course/'},
+{d:'Wed',t:'Wireless Standards (802.11)',det:'Watch video. Compare a/b/g/n/ac/ax speeds and frequencies.',url:'https://www.professormesser.com/network-plus/n10-009/n10-009-video/n10-009-training-course/'},
+{d:'Thu',t:'Wireless Security + Cellular',det:'Watch videos. Note WPA2 vs WPA3 differences.',url:'https://www.professormesser.com/network-plus/n10-009/n10-009-video/n10-009-training-course/'},
+{d:'Fri',t:'Review + OverTheWire Bandit L4–7',det:'Consolidate switching & wireless notes. Continue Bandit.',url:'https://overthewire.org/wargames/bandit/'},
+]},
+{label:'Week 5',topic:'DNS, DHCP, NTP, Network services',days:[
+{d:'Mon',t:'DNS + DHCP',det:'Watch videos. Run nslookup and ipconfig/release/renew locally.',url:'https://www.professormesser.com/network-plus/n10-009/n10-009-video/n10-009-training-course/'},
+{d:'Tue',t:'NTP + SNMP',det:'Watch videos. Understand stratum levels, OIDs.',url:'https://www.professormesser.com/network-plus/n10-009/n10-009-video/n10-009-training-course/'},
+{d:'Wed',t:'Proxy servers + Load balancers',det:'Watch videos. Compare forward vs reverse proxy.',url:'https://www.professormesser.com/network-plus/n10-009/n10-009-video/n10-009-training-course/'},
+{d:'Thu',t:'IDS/IPS + Firewall types',det:'Watch videos. Note packet filter vs stateful vs NGFW.',url:'https://www.professormesser.com/network-plus/n10-009/n10-009-video/n10-009-training-course/'},
+{d:'Fri',t:'Review + SubnettingPractice.com 30 Qs',det:'Mixed revision. Do 30 subnetting questions timed.',url:'https://www.subnettingpractice.com'},
+]},
+{label:'Week 6',topic:'Network security, Authentication, VPNs',days:[
+{d:'Mon',t:'Authentication + AAA',det:'Watch videos. Understand RADIUS, TACACS+, 802.1X.',url:'https://www.professormesser.com/network-plus/n10-009/n10-009-video/n10-009-training-course/'},
+{d:'Tue',t:'VPN types + Tunneling protocols',det:'Watch videos. Compare IPSec vs SSL VPN.',url:'https://www.professormesser.com/network-plus/n10-009/n10-009-video/n10-009-training-course/'},
+{d:'Wed',t:'Network Hardening techniques',det:'Watch videos. Note port security, BPDU guard, DAI.',url:'https://www.professormesser.com/network-plus/n10-009/n10-009-video/n10-009-training-course/'},
+{d:'Thu',t:'Physical security + Environmental',det:'Watch videos. Note badge access, cameras, temperature.',url:'https://www.professormesser.com/network-plus/n10-009/n10-009-video/n10-009-training-course/'},
+{d:'Fri',t:'Review + OverTheWire Bandit L8–12',det:'Continue Linux CLI skills alongside network notes.',url:'https://overthewire.org/wargames/bandit/'},
+]},
+{label:'Week 7',topic:'Monitoring, performance, troubleshooting tools',days:[
+{d:'Mon',t:'Network monitoring + SNMP traps',det:'Watch videos. Understand MIB, OID, traps vs polling.',url:'https://www.professormesser.com/network-plus/n10-009/n10-009-video/n10-009-training-course/'},
+{d:'Tue',t:'Performance metrics + Baselines',det:'Watch videos. Note bandwidth, latency, jitter, packet loss.',url:'https://www.professormesser.com/network-plus/n10-009/n10-009-video/n10-009-training-course/'},
+{d:'Wed',t:'Packet capture + Wireshark intro',det:'Install Wireshark. Capture 5 min of traffic. Identify 3 protocols.',url:'https://www.wireshark.org'},
+{d:'Thu',t:'CLI tools: ping, tracert, nslookup, netstat',det:'Run each tool. Document what each output means.',url:'https://www.professormesser.com/network-plus/n10-009/n10-009-video/n10-009-training-course/'},
+{d:'Fri',t:'Review all monitoring + tools notes',det:'Create a 1-page tools cheat sheet. Quiz yourself.',url:'https://www.professormesser.com/network-plus/n10-009/n10-009-video/n10-009-training-course/'},
+]},
+{label:'Week 8',topic:'Network+ remaining videos + full revision',days:[
+{d:'Mon',t:'Disaster recovery + High availability',det:'Watch videos. Understand MTTR, MTBF, RTO, RPO.',url:'https://www.professormesser.com/network-plus/n10-009/n10-009-video/n10-009-training-course/'},
+{d:'Tue',t:'Documentation + Diagrams + Policies',det:'Watch videos. Understand network diagrams, SOPs.',url:'https://www.professormesser.com/network-plus/n10-009/n10-009-video/n10-009-training-course/'},
+{d:'Wed',t:'Troubleshooting methodology',det:'Watch video. Memorise the 7-step troubleshooting model.',url:'https://www.professormesser.com/network-plus/n10-009/n10-009-video/n10-009-training-course/'},
+{d:'Thu',t:'Wireless troubleshooting + Cable issues',det:'Watch remaining troubleshooting videos.',url:'https://www.professormesser.com/network-plus/n10-009/n10-009-video/n10-009-training-course/'},
+{d:'Fri',t:'Full Network+ revision + 50 practice Qs',det:'Do 50 mixed Network+ questions at examcompass.com.',url:'https://www.examcompass.com/comptia/network-plus-certification/free-network-plus-practice-tests'},
+]},
+]},
+{id:'p2',label:'Phase 2',name:'Security+ SY0-701',months:'Month 3–4 (Weeks 9–16)',color:'#0F6E56',bg:'#E1F5EE',tc:'#085041',
+stats:['121 videos total','~15 hrs content','2–3 videos/day','All 5 domains'],
+weeks:[
+{label:'Week 9',topic:'Security+ intro, CIA triad, threat actors',days:[
+{d:'Mon',t:'How to pass SY0-701 + Security Controls',det:'Watch intro + controls video. Note preventive/detective/corrective.',url:'https://www.professormesser.com/security-plus/sy0-701/sy0-701-video/sy0-701-comptia-security-plus-course/'},
+{d:'Tue',t:'CIA Triad + Threat actors',det:'Watch videos. Map each CIA goal to a real attack type.',url:'https://www.professormesser.com/security-plus/sy0-701/sy0-701-video/sy0-701-comptia-security-plus-course/'},
+{d:'Wed',t:'Social engineering + Phishing types',det:'Watch videos. List 8 social engineering techniques.',url:'https://www.professormesser.com/security-plus/sy0-701/sy0-701-video/sy0-701-comptia-security-plus-course/'},
+{d:'Thu',t:'Malware types + Indicators of compromise',det:'Watch videos. Create malware type cheat sheet.',url:'https://www.professormesser.com/security-plus/sy0-701/sy0-701-video/sy0-701-comptia-security-plus-course/'},
+{d:'Fri',t:'TryHackMe — Intro to Cybersecurity path',det:'Start free learning path on TryHackMe.',url:'https://tryhackme.com/path/outline/introtocyber'},
+]},
+{label:'Week 10',topic:'Cryptography fundamentals',days:[
+{d:'Mon',t:'Encryption + Symmetric algorithms',det:'Watch videos. Compare AES, DES, 3DES.',url:'https://www.professormesser.com/security-plus/sy0-701/sy0-701-video/sy0-701-comptia-security-plus-course/'},
+{d:'Tue',t:'Asymmetric encryption + PKI',det:'Watch videos. Understand public/private key pair, certificates.',url:'https://www.professormesser.com/security-plus/sy0-701/sy0-701-video/sy0-701-comptia-security-plus-course/'},
+{d:'Wed',t:'Hashing + Digital signatures',det:'Watch videos. Run md5sum and sha256sum on a file.',url:'https://www.professormesser.com/security-plus/sy0-701/sy0-701-video/sy0-701-comptia-security-plus-course/'},
+{d:'Thu',t:'TLS/SSL + Key exchange',det:'Watch videos. Trace a TLS handshake in Wireshark.',url:'https://www.wireshark.org'},
+{d:'Fri',t:'THM Cryptography room + review',det:'Complete TryHackMe Cryptography intro room.',url:'https://tryhackme.com/room/cryptographyintro'},
+]},
+{label:'Week 11',topic:'Identity & Access Management',days:[
+{d:'Mon',t:'Authentication factors + MFA',det:'Watch videos. List 5 MFA methods with pros/cons.',url:'https://www.professormesser.com/security-plus/sy0-701/sy0-701-video/sy0-701-comptia-security-plus-course/'},
+{d:'Tue',t:'IAM concepts + RBAC + least privilege',det:'Watch videos. Design a simple RBAC model.',url:'https://www.professormesser.com/security-plus/sy0-701/sy0-701-video/sy0-701-comptia-security-plus-course/'},
+{d:'Wed',t:'Single Sign-On + Federation + SAML',det:'Watch videos. Understand SP vs IdP, SAML assertions.',url:'https://www.professormesser.com/security-plus/sy0-701/sy0-701-video/sy0-701-comptia-security-plus-course/'},
+{d:'Thu',t:'Privileged Access Management',det:'Watch videos. Note why PAM matters for IT admins.',url:'https://www.professormesser.com/security-plus/sy0-701/sy0-701-video/sy0-701-comptia-security-plus-course/'},
+{d:'Fri',t:'THM Authentication Bypass room',det:'Complete TryHackMe Authentication Bypass room.',url:'https://tryhackme.com/room/authenticationbypass'},
+]},
+{label:'Week 12',topic:'Network security architecture',days:[
+{d:'Mon',t:'Network segmentation + DMZ + Zero Trust',det:'Watch videos. Draw a DMZ architecture.',url:'https://www.professormesser.com/security-plus/sy0-701/sy0-701-video/sy0-701-comptia-security-plus-course/'},
+{d:'Tue',t:'Firewall types + WAF + UTM',det:'Watch videos. Compare NGFW vs WAF use cases.',url:'https://www.professormesser.com/security-plus/sy0-701/sy0-701-video/sy0-701-comptia-security-plus-course/'},
+{d:'Wed',t:'VPN + Tunneling + SD-WAN',det:'Watch videos. Compare site-to-site vs remote access VPN.',url:'https://www.professormesser.com/security-plus/sy0-701/sy0-701-video/sy0-701-comptia-security-plus-course/'},
+{d:'Thu',t:'Cloud security + Shared responsibility',det:'Watch videos. Map AWS shared responsibility model.',url:'https://www.professormesser.com/security-plus/sy0-701/sy0-701-video/sy0-701-comptia-security-plus-course/'},
+{d:'Fri',t:'Review + 30 practice Qs Domains 1–2',det:'Do 30 Security+ questions at examcompass.com.',url:'https://www.examcompass.com/comptia/security-plus-certification/free-security-plus-practice-tests'},
+]},
+{label:'Week 13',topic:'Vulnerability management',days:[
+{d:'Mon',t:'Vulnerability scanning concepts',det:'Watch videos. Understand authenticated vs unauthenticated scans.',url:'https://www.professormesser.com/security-plus/sy0-701/sy0-701-video/sy0-701-comptia-security-plus-course/'},
+{d:'Tue',t:'CVE + CVSS scoring',det:'Watch videos. Read 3 real CVEs on nvd.nist.gov.',url:'https://nvd.nist.gov'},
+{d:'Wed',t:'Penetration testing concepts',det:'Watch videos. Understand black/white/grey box testing.',url:'https://www.professormesser.com/security-plus/sy0-701/sy0-701-video/sy0-701-comptia-security-plus-course/'},
+{d:'Thu',t:'MITRE ATT&CK intro',det:'Browse mitre.org. Study 5 tactics and their techniques.',url:'https://attack.mitre.org'},
+{d:'Fri',t:'THM Vulnversity room',det:'Complete TryHackMe Vulnversity introductory room.',url:'https://tryhackme.com/room/vulnversity'},
+]},
+{label:'Week 14',topic:'Security operations & SIEM',days:[
+{d:'Mon',t:'SIEM concepts + log management',det:'Watch videos. Understand correlation rules, dashboards.',url:'https://www.professormesser.com/security-plus/sy0-701/sy0-701-video/sy0-701-comptia-security-plus-course/'},
+{d:'Tue',t:'Splunk Free Fundamentals 1 — Part 1',det:'Start Splunk free course. Complete first 2 modules.',url:'https://www.splunk.com/en_us/training/free-courses.html'},
+{d:'Wed',t:'Splunk Free Fundamentals 1 — Part 2',det:'Complete next 2 modules. Practice basic SPL searches.',url:'https://www.splunk.com/en_us/training/free-courses.html'},
+{d:'Thu',t:'Log types: Windows event, syslog, firewall',det:'Download sample logs from SecRepo. Parse manually.',url:'https://www.secrepo.com'},
+{d:'Fri',t:'Review + 40 practice Qs mixed',det:'40 mixed Security+ questions. Flag all wrong answers.',url:'https://www.examcompass.com/comptia/security-plus-certification/free-security-plus-practice-tests'},
+]},
+{label:'Week 15',topic:'Incident response & threat intelligence',days:[
+{d:'Mon',t:'IR lifecycle — NIST SP 800-61',det:'Read NIST 800-61 Rev 2. Summarise each phase.',url:'https://csrc.nist.gov/publications/detail/sp/800-61/rev-2/final'},
+{d:'Tue',t:'Threat intelligence types + ISAC',det:'Watch videos. Understand strategic vs tactical intel.',url:'https://www.professormesser.com/security-plus/sy0-701/sy0-701-video/sy0-701-comptia-security-plus-course/'},
+{d:'Wed',t:'Digital forensics basics',det:'Watch videos. Understand chain of custody, order of volatility.',url:'https://www.professormesser.com/security-plus/sy0-701/sy0-701-video/sy0-701-comptia-security-plus-course/'},
+{d:'Thu',t:'Automation + SOAR concepts',det:'Watch videos. Understand playbook automation.',url:'https://www.professormesser.com/security-plus/sy0-701/sy0-701-video/sy0-701-comptia-security-plus-course/'},
+{d:'Fri',t:'Write mock IR playbook for ransomware',det:'1-page playbook: detect → contain → eradicate → recover.',url:'https://csrc.nist.gov/publications/detail/sp/800-61/rev-2/final'},
+]},
+{label:'Week 16',topic:'Security+ Domains 4–5 + full revision',days:[
+{d:'Mon',t:'Risk management + BIA',det:'Watch videos. Understand qualitative vs quantitative risk.',url:'https://www.professormesser.com/security-plus/sy0-701/sy0-701-video/sy0-701-comptia-security-plus-course/'},
+{d:'Tue',t:'Compliance + GDPR + data privacy',det:'Watch videos. List key GDPR obligations.',url:'https://www.professormesser.com/security-plus/sy0-701/sy0-701-video/sy0-701-comptia-security-plus-course/'},
+{d:'Wed',t:'Audits + Security awareness training',det:'Watch final domain videos.',url:'https://www.professormesser.com/security-plus/sy0-701/sy0-701-video/sy0-701-comptia-security-plus-course/'},
+{d:'Thu',t:'Full Security+ revision — all 5 domains',det:'Re-read all notes. Create mind map of 5 domains.',url:'https://www.professormesser.com/security-plus/sy0-701/sy0-701-video/sy0-701-comptia-security-plus-course/'},
+{d:'Fri',t:'60 mixed Security+ practice Qs timed',det:'60 questions in 60 minutes. Target 80%+.',url:'https://www.examcompass.com/comptia/security-plus-certification/free-security-plus-practice-tests'},
+]},
+]},
+{id:'p3',label:'Phase 3',name:'Hands-on SOC skills',months:'Month 5–6 (Weeks 17–24)',color:'#BA7517',bg:'#FAEEDA',tc:'#633806',
+stats:['TryHackMe SOC L1 path','Wireshark + Snort','Splunk advanced','MITRE + Sigma'],
+weeks:[
+{label:'Week 17',topic:'Wireshark deep dive',days:[
+{d:'Mon',t:'Wireshark filters + display filters',det:'Capture traffic. Master src/dst IP and port filters.',url:'https://www.wireshark.org'},
+{d:'Tue',t:'Analyse HTTP traffic in Wireshark',det:'Download PCAP from malware-traffic-analysis.net. Find HTTP requests.',url:'https://www.malware-traffic-analysis.net'},
+{d:'Wed',t:'Analyse DNS traffic in Wireshark',det:'Filter dns. Identify queries, responses, TTLs.',url:'https://www.malware-traffic-analysis.net'},
+{d:'Thu',t:'THM Wireshark: The Basics room',det:'Complete TryHackMe Wireshark Basics room.',url:'https://tryhackme.com/room/wiresharkthebasics'},
+{d:'Fri',t:'THM Wireshark: Packet Operations room',det:'Complete TryHackMe Wireshark Packet Operations room.',url:'https://tryhackme.com/room/wiresharkpacketoperations'},
+]},
+{label:'Week 18',topic:'TryHackMe SOC Level 1 path',days:[
+{d:'Mon',t:'THM: Cyber Defence Frameworks room',det:'Complete room on MITRE ATT&CK, Diamond Model.',url:'https://tryhackme.com/room/cyberdefenceframeworks'},
+{d:'Tue',t:'THM: Cyber Threat Intelligence room',det:'Complete CTI fundamentals room.',url:'https://tryhackme.com/room/cyberthreatintel'},
+{d:'Wed',t:'THM: Threat Intelligence Tools room',det:'Practice with MISP, OpenCTI intro.',url:'https://tryhackme.com/room/threatinteltools'},
+{d:'Thu',t:'MITRE ATT&CK — map 5 real APT groups',det:'Pick 5 APT groups on mitre.org. Map their TTPs.',url:'https://attack.mitre.org/groups/'},
+{d:'Fri',t:'Write 1-page threat actor profile',det:'Document one APT group: name, targets, TTPs, IOCs.',url:'https://attack.mitre.org/groups/'},
+]},
+{label:'Week 19',topic:'Snort IDS + network detection',days:[
+{d:'Mon',t:'Install Snort on VM (Ubuntu)',det:'Follow Snort 3 install guide. Verify it runs.',url:'https://www.snort.org'},
+{d:'Tue',t:'THM Snort room — Part 1',det:'Complete first half of TryHackMe Snort room.',url:'https://tryhackme.com/room/snort'},
+{d:'Wed',t:'THM Snort room — Part 2',det:'Complete second half. Write 2 custom rules.',url:'https://tryhackme.com/room/snort'},
+{d:'Thu',t:'THM Snort Challenge room',det:'Apply rules in challenge scenario.',url:'https://tryhackme.com/room/snortchallenges1'},
+{d:'Fri',t:'Write 5 Snort rules from scratch',det:'Cover: port scan, brute force, SQL injection attempts.',url:'https://www.snort.org/documents'},
+]},
+{label:'Week 20',topic:'Splunk for SOC analysts',days:[
+{d:'Mon',t:'Splunk: Searching and Reporting',det:'Complete Splunk free Fundamentals 2 module 1.',url:'https://www.splunk.com/en_us/training/free-courses.html'},
+{d:'Tue',t:'THM Splunk: Basics room',det:'Complete TryHackMe Splunk Basics room.',url:'https://tryhackme.com/room/splunk101'},
+{d:'Wed',t:'THM Splunk 2 room',det:'Complete TryHackMe Splunk 2 investigation room.',url:'https://tryhackme.com/room/splunk2gcd5'},
+{d:'Thu',t:'Write 3 detection SPL queries',det:'Detect: failed logins, large data transfer, new admin account.',url:'https://www.splunk.com/en_us/training/free-courses.html'},
+{d:'Fri',t:'Document Splunk queries in GitHub',det:'Save queries with comments in your GitHub repo.',url:'https://github.com'},
+]},
+{label:'Week 21',topic:'Python scripting for security',days:[
+{d:'Mon',t:'Python: socket module + port scanner',det:'Write a basic TCP port scanner in Python.',url:'https://automatetheboringstuff.com'},
+{d:'Tue',t:'Python: parse syslog files',det:'Parse a syslog file. Extract IPs, timestamps, error codes.',url:'https://www.secrepo.com'},
+{d:'Wed',t:'Python: automate VirusTotal lookups',det:'Use VirusTotal free API to check file hashes via script.',url:'https://www.virustotal.com/gui/home/upload'},
+{d:'Thu',t:'Python: generate basic IR report',det:'Script that reads log file and outputs HTML incident summary.',url:'https://automatetheboringstuff.com'},
+{d:'Fri',t:'Upload all scripts to GitHub',det:'Create cybersecurity-scripts repo. Write README for each.',url:'https://github.com'},
+]},
+{label:'Week 22',topic:'Sigma rules + detection engineering',days:[
+{d:'Mon',t:'Read Sigma docs + rule structure',det:'Read Sigma GitHub wiki. Understand rule format.',url:'https://github.com/SigmaHQ/sigma'},
+{d:'Tue',t:'Write Sigma rule: brute force detection',det:'Create rule for 5+ failed logins in 60 seconds.',url:'https://github.com/SigmaHQ/sigma'},
+{d:'Wed',t:'Write Sigma rule: recon/port scan',det:'Create rule for Nmap-like scan patterns.',url:'https://github.com/SigmaHQ/sigma'},
+{d:'Thu',t:'Write Sigma rule: lateral movement',det:'Detect PsExec or WMI remote execution.',url:'https://github.com/SigmaHQ/sigma'},
+{d:'Fri',t:'Upload 3 Sigma rules to GitHub',det:'Add to repo with README explaining each rule.',url:'https://github.com'},
+]},
+{label:'Week 23',topic:'Digital forensics — Volatility & Autopsy',days:[
+{d:'Mon',t:'Install Volatility 3 on VM',det:'Follow install guide. Run imageinfo on sample dump.',url:'https://volatility3.readthedocs.io'},
+{d:'Tue',t:'Volatility: process analysis',det:'Use pslist, pstree, dlllist on a memory image.',url:'https://volatility3.readthedocs.io'},
+{d:'Wed',t:'Volatility: network connections + malware',det:'Use netscan, malfind on sample image.',url:'https://volatility3.readthedocs.io'},
+{d:'Thu',t:'Install Autopsy + analyse disk image',det:'Download CFReDS image. Find deleted files, browsing history.',url:'https://www.autopsy.com'},
+{d:'Fri',t:'Write 1-page forensics analysis report',det:'Document findings from Volatility + Autopsy.',url:'https://www.nist.gov/itl/ssd/software-quality-group/computer-forensics-tool-testing-program/cftt/cfreds'},
+]},
+{label:'Week 24',topic:'Malware analysis + threat hunting',days:[
+{d:'Mon',t:'Static malware analysis — PEStudio',det:'Download PEStudio free. Analyse a benign PE file first.',url:'https://www.winitor.com'},
+{d:'Tue',t:'Dynamic analysis — any.run sandbox',det:'Submit a sample to any.run free sandbox. Read report.',url:'https://any.run'},
+{d:'Wed',t:'THM: MAL: Malware Introductory room',det:'Complete TryHackMe malware intro room.',url:'https://tryhackme.com/room/malmalintroductory'},
+{d:'Thu',t:'Threat hunting hypothesis writing',det:'Write 3 threat hunting hypotheses based on MITRE ATT&CK.',url:'https://attack.mitre.org'},
+{d:'Fri',t:'Phase 3 review — full portfolio check',det:'Ensure GitHub has: scripts, Sigma rules, forensics report.',url:'https://github.com'},
+]},
+]},
+{id:'p4',label:'Phase 4',name:'Offensive awareness',months:'Month 7–8 (Weeks 25–32)',color:'#993C1D',bg:'#FAECE7',tc:'#4A1B0C',
+stats:['PortSwigger Academy (free)','TryHackMe rooms','Kali Linux setup','Cloud security'],
+weeks:[
+{label:'Week 25',topic:'OWASP Top 10 — web vulnerabilities',days:[
+{d:'Mon',t:'OWASP A01–A03: Broken Access + Injection',det:'Read OWASP docs. Do PortSwigger Access Control labs.',url:'https://portswigger.net/web-security/access-control'},
+{d:'Tue',t:'PortSwigger: SQL injection labs',det:'Complete beginner SQL injection labs (free).',url:'https://portswigger.net/web-security/sql-injection'},
+{d:'Wed',t:'PortSwigger: XSS labs',det:'Complete reflected + stored XSS labs.',url:'https://portswigger.net/web-security/cross-site-scripting'},
+{d:'Thu',t:'OWASP A04–A07: Misconfig + SSRF',det:'Read OWASP docs. Do related PortSwigger labs.',url:'https://portswigger.net/web-security/ssrf'},
+{d:'Fri',t:'THM: OWASP Top 10 room',det:'Complete TryHackMe OWASP Top 10 room.',url:'https://tryhackme.com/room/owasptop102021'},
+]},
+{label:'Week 26',topic:'Burp Suite — web app testing',days:[
+{d:'Mon',t:'Burp Suite: intercept + repeater',det:'Install Burp Community free. Intercept a request.',url:'https://portswigger.net/burp/communitydownload'},
+{d:'Tue',t:'THM: Burp Suite Basics room',det:'Complete TryHackMe Burp Suite Basics room.',url:'https://tryhackme.com/room/burpsuitebasics'},
+{d:'Wed',t:'THM: Burp Suite Repeater room',det:'Complete TryHackMe Burp Suite Repeater room.',url:'https://tryhackme.com/room/burpsuiterepeater'},
+{d:'Thu',t:'PortSwigger: IDOR labs',det:'Complete Insecure Direct Object Reference labs.',url:'https://portswigger.net/web-security/access-control/idor'},
+{d:'Fri',t:'Document web vuln notes in GitHub',det:'Write a web vuln testing notes page in your GitHub repo.',url:'https://github.com'},
+]},
+{label:'Week 27',topic:'Nmap + network recon',days:[
+{d:'Mon',t:'Nmap basics: -sS, -sV, -O scans',det:'Scan your home lab VM. Document all open ports.',url:'https://nmap.org'},
+{d:'Tue',t:'THM: Further Nmap room',det:'Complete TryHackMe Further Nmap room.',url:'https://tryhackme.com/room/furthernmap'},
+{d:'Wed',t:'Nmap scripting engine (NSE)',det:'Run 3 NSE scripts: vuln, http-title, smb-os-discovery.',url:'https://nmap.org/book/nse.html'},
+{d:'Thu',t:'OSINT techniques + Shodan',det:'Use Shodan free to find exposed devices. Document findings.',url:'https://www.shodan.io'},
+{d:'Fri',t:'THM: Passive Recon room',det:'Complete TryHackMe Passive Reconnaissance room.',url:'https://tryhackme.com/room/passiverecon'},
+]},
+{label:'Week 28',topic:'Metasploit basics',days:[
+{d:'Mon',t:'Install Kali Linux VM',det:'Download Kali VirtualBox image. Boot and verify tools.',url:'https://www.kali.org/get-kali/'},
+{d:'Tue',t:'THM: Metasploit Introduction room',det:'Complete TryHackMe Metasploit Introduction room.',url:'https://tryhackme.com/room/metasploitintro'},
+{d:'Wed',t:'THM: Metasploit Exploitation room',det:'Complete exploitation room — practice msfconsole.',url:'https://tryhackme.com/room/metasploitintro'},
+{d:'Thu',t:'THM: Blue room (MS17-010 EternalBlue)',det:'Complete TryHackMe Blue room — classic exploit lab.',url:'https://tryhackme.com/room/blue'},
+{d:'Fri',t:'Map lab steps to MITRE ATT&CK',det:'Tag every step of your lab with ATT&CK technique IDs.',url:'https://attack.mitre.org'},
+]},
+{label:'Week 29',topic:'Privilege escalation + Active Directory',days:[
+{d:'Mon',t:'THM: Linux Privilege Escalation room',det:'Complete TryHackMe Linux PrivEsc room.',url:'https://tryhackme.com/room/linuxprivesc'},
+{d:'Tue',t:'THM: Windows Privilege Escalation room',det:'Complete TryHackMe Windows PrivEsc room.',url:'https://tryhackme.com/room/windows10privesc'},
+{d:'Wed',t:'Lateral movement concepts',det:'Study Pass-the-Hash, Pass-the-Ticket, WMI, PsExec.',url:'https://attack.mitre.org/tactics/TA0008/'},
+{d:'Thu',t:'THM: Active Directory Basics room',det:'Understand AD structure — forests, domains, OUs, GPOs.',url:'https://tryhackme.com/room/activedirectorybasics'},
+{d:'Fri',t:'Write attacker detection playbook',det:'Document how you would detect each technique you learned.',url:'https://attack.mitre.org'},
+]},
+{label:'Week 30',topic:'Cloud security — AWS & Azure',days:[
+{d:'Mon',t:'AWS Shared Responsibility Model',det:'Read AWS docs. Map what customer vs AWS secures.',url:'https://aws.amazon.com/compliance/shared-responsibility-model/'},
+{d:'Tue',t:'AWS free Cloud Practitioner essentials',det:'Start AWS free digital training — security module.',url:'https://aws.amazon.com/training/digital/aws-cloud-practitioner-essentials/'},
+{d:'Wed',t:'IAM misconfigurations + overpermissioned roles',det:'Study common IAM mistakes. Read AWS IAM best practices.',url:'https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html'},
+{d:'Thu',t:'THM: Cloud Security Basics room',det:'Complete TryHackMe Cloud Security room.',url:'https://tryhackme.com/room/cloudsecurityintro'},
+{d:'Fri',t:'Document 10 cloud misconfigs + mitigations',det:'Add cloud security notes to GitHub repo.',url:'https://github.com'},
+]},
+{label:'Week 31',topic:'Full attack chain + pentest report',days:[
+{d:'Mon',t:'THM: Relevant room (full pentest)',det:'Complete TryHackMe Relevant room — full attack chain.',url:'https://tryhackme.com/room/relevant'},
+{d:'Tue',t:'Write a full pentest report',det:'Document: recon → exploit → post-exploit → recommendations.',url:'https://github.com'},
+{d:'Wed',t:'Map attack to MITRE ATT&CK',det:'Tag every step of your pentest with ATT&CK technique IDs.',url:'https://attack.mitre.org'},
+{d:'Thu',t:'Write Sigma/Splunk rules to detect yourself',det:'Detection rules for your own attack steps.',url:'https://github.com/SigmaHQ/sigma'},
+{d:'Fri',t:'Upload pentest report + detection rules',det:'Add all to GitHub. This is a strong portfolio piece.',url:'https://github.com'},
+]},
+{label:'Week 32',topic:'HackTheBox + portfolio review',days:[
+{d:'Mon',t:'Review all Phase 4 labs',det:'Re-read all notes. Fill gaps in MITRE ATT&CK coverage.',url:'https://attack.mitre.org'},
+{d:'Tue',t:'HackTheBox Starting Point — Tier 0',det:'Start free HackTheBox Starting Point labs.',url:'https://www.hackthebox.com/hacker/starting-point'},
+{d:'Wed',t:'HackTheBox: Tier 1 machine',det:'Complete one Tier 1 starting point machine.',url:'https://www.hackthebox.com/hacker/starting-point'},
+{d:'Thu',t:'Write HTB machine write-up',det:'Document steps in a write-up. Post to GitHub.',url:'https://github.com'},
+{d:'Fri',t:'Portfolio audit — GitHub review',det:'Ensure 5+ projects visible: scripts, rules, reports, HTB.',url:'https://github.com'},
+]},
+]},
+{id:'p5',label:'Phase 5',name:'CySA+ prep + SOC specialisation',months:'Month 9–10 (Weeks 33–40)',color:'#185FA5',bg:'#E6F1FB',tc:'#042C53',
+stats:['CySA+ CS0-003 course','SOC playbooks','Threat hunting','Advanced Splunk'],
+weeks:[
+{label:'Week 33',topic:'CySA+ intro + threat management',days:[
+{d:'Mon',t:'CySA+ CS0-003 intro + Domain 1 overview',det:'Start Professor Messer CySA+ free YouTube course.',url:'https://www.youtube.com/@professormesser'},
+{d:'Tue',t:'Threat intelligence lifecycle',det:'Watch CySA+ threat intelligence videos.',url:'https://www.youtube.com/@professormesser'},
+{d:'Wed',t:'Vulnerability scanning types',det:'Watch CySA+ scanning videos. Compare credentialed vs non.',url:'https://www.youtube.com/@professormesser'},
+{d:'Thu',t:'Analysing scan results + CVSS calculator',det:'Watch videos. Practice with CVSS calculator.',url:'https://www.first.org/cvss/calculator/3.1'},
+{d:'Fri',t:'40 CySA+ practice Qs — Domain 1',det:'ExamCompass CySA+ practice questions.',url:'https://www.examcompass.com'},
+]},
+{label:'Week 34',topic:'SOC operations + triage playbooks',days:[
+{d:'Mon',t:'SOC tiers + analyst workflow',det:'Watch CySA+ SOC videos. Understand L1/L2/L3 roles.',url:'https://www.youtube.com/@professormesser'},
+{d:'Tue',t:'Alert triage + false positive reduction',det:'Watch videos. Build a triage decision flowchart.',url:'https://www.youtube.com/@professormesser'},
+{d:'Wed',t:'THM: SOC Level 1 learning path',det:'Continue TryHackMe SOC Level 1 path rooms.',url:'https://tryhackme.com/path/outline/soclevel1'},
+{d:'Thu',t:'Write SOC triage playbook (phishing)',det:'Document: receive alert → investigate → escalate.',url:'https://github.com'},
+{d:'Fri',t:'Write SOC triage playbook (malware)',det:'Document malware alert response playbook.',url:'https://github.com'},
+]},
+{label:'Week 35',topic:'Advanced Splunk + SIEM tuning',days:[
+{d:'Mon',t:'Splunk: correlation searches + alerts',det:'Create a correlation search for brute force.',url:'https://www.splunk.com/en_us/training/free-courses.html'},
+{d:'Tue',t:'Splunk: SOC dashboard build',det:'Build a dashboard: failed logins, network anomalies.',url:'https://www.splunk.com/en_us/training/free-courses.html'},
+{d:'Wed',t:'SIEM use case development',det:'Write 5 detection use cases with logic, data source, response.',url:'https://github.com'},
+{d:'Thu',t:'Reducing alert fatigue — tuning rules',det:'Study false positive tuning. Update your Splunk alerts.',url:'https://www.splunk.com/en_us/training/free-courses.html'},
+{d:'Fri',t:'Document all SIEM use cases in GitHub',det:'Create a detection-rules folder in your GitHub repo.',url:'https://github.com'},
+]},
+{label:'Week 36',topic:'Threat hunting techniques',days:[
+{d:'Mon',t:'Threat hunting methodology',det:'Read SANS threat hunting whitepaper (free PDF).',url:'https://www.sans.org/white-papers/threat-hunting/'},
+{d:'Tue',t:'Hunting with Wireshark: C2 traffic',det:'Analyse a C2 PCAP from malware-traffic-analysis.net.',url:'https://www.malware-traffic-analysis.net'},
+{d:'Wed',t:'Hunting with Splunk: anomalous logins',det:'Hunt for logins at unusual hours or from new IPs.',url:'https://www.splunk.com/en_us/training/free-courses.html'},
+{d:'Thu',t:'Hunting: lateral movement indicators',det:'Look for PsExec, WMI, unusual admin shares in logs.',url:'https://attack.mitre.org/tactics/TA0008/'},
+{d:'Fri',t:'Write threat hunt report',det:'Document hypothesis, data sources, findings, outcome.',url:'https://github.com'},
+]},
+{label:'Week 37',topic:'CySA+ Domain 2–3: Vuln mgmt + IR',days:[
+{d:'Mon',t:'Remediation prioritisation + SLAs',det:'Watch CySA+ videos. Understand CVSS vs EPSS.',url:'https://www.youtube.com/@professormesser'},
+{d:'Tue',t:'Patch management process',det:'Watch videos. Design a patch management workflow.',url:'https://www.youtube.com/@professormesser'},
+{d:'Wed',t:'Configuration management + CIS Benchmarks',det:'Watch videos. Review CIS Benchmarks for Windows.',url:'https://www.cisecurity.org/cis-benchmarks'},
+{d:'Thu',t:'CySA+ Domain 3: IR + digital forensics',det:'Watch incident response domain videos.',url:'https://www.youtube.com/@professormesser'},
+{d:'Fri',t:'50 CySA+ practice Qs — Domains 2–3',det:'Mixed practice questions. Target 80%+ score.',url:'https://www.examcompass.com'},
+]},
+{label:'Week 38',topic:'CySA+ Domain 4 — reporting',days:[
+{d:'Mon',t:'Writing IR reports + executive summaries',det:'Watch CySA+ reporting videos. Write a mock exec summary.',url:'https://www.youtube.com/@professormesser'},
+{d:'Tue',t:'Metrics + KPIs for SOC',det:'Watch videos. Define 10 SOC metrics you would track.',url:'https://www.youtube.com/@professormesser'},
+{d:'Wed',t:'Communication during incidents',det:'Practice explaining a breach to a non-technical manager.',url:'https://www.youtube.com/@professormesser'},
+{d:'Thu',t:'Compliance: NIST CSF + ISO 27001',det:'Watch videos. Map NIST CSF to your IR playbook.',url:'https://www.nist.gov/cyberframework'},
+{d:'Fri',t:'60 CySA+ practice Qs — all domains',det:'Timed: 60 questions in 75 minutes. Flag weak areas.',url:'https://www.examcompass.com'},
+]},
+{label:'Week 39',topic:'Build your portfolio + LinkedIn',days:[
+{d:'Mon',t:'GitHub portfolio audit',det:'Review all repos. Ensure each has a clear README.',url:'https://github.com'},
+{d:'Tue',t:'Write blog: "How I detect brute force"',det:'Publish on GitHub Pages or Medium (free).',url:'https://pages.github.com'},
+{d:'Wed',t:'Write blog: "MITRE ATT&CK explained"',det:'Second article. Shows communication depth.',url:'https://pages.github.com'},
+{d:'Thu',t:'LinkedIn profile update',det:'Add all projects, tools, certs in progress. Strong About section.',url:'https://www.linkedin.com'},
+{d:'Fri',t:'Apply to 5 SOC analyst job postings',det:'Target L1/L2 SOC, Security Analyst, Junior IR Analyst.',url:'https://www.linkedin.com/jobs/'},
+]},
+{label:'Week 40',topic:'Mock interviews + job applications',days:[
+{d:'Mon',t:'Top 20 SOC analyst interview questions',det:'Research and write answers to 20 common questions.',url:'https://github.com'},
+{d:'Tue',t:'Practice: explain a security incident',det:'Out loud, explain your Splunk lab findings as in an interview.',url:'https://github.com'},
+{d:'Wed',t:'Practice: walk through your GitHub projects',det:'Demo each project. Time yourself: 2 min per project.',url:'https://github.com'},
+{d:'Thu',t:'Apply to 10 more job postings',det:'LinkedIn, Naukri, Indeed. Tailor CV per role.',url:'https://www.naukri.com'},
+{d:'Fri',t:'Final CySA+ revision + book exam',det:'Last 80 practice questions. Book your CySA+ exam.',url:'https://www.comptia.org/certifications/cybersecurity-analyst'},
+]},
+]},
+{id:'p6',label:'Phase 6',name:'Exam sittings + job hunt close',months:'Month 11–12 (Weeks 41–48)',color:'#993556',bg:'#FBEAF0',tc:'#72243E',
+stats:['Sit Security+ exam','Sit CySA+ exam','Active job hunt','Interview practice'],
+weeks:[
+{label:'Week 41',topic:'Security+ final exam preparation',days:[
+{d:'Mon',t:'Revise Domains 1–2 + 50 practice Qs',det:'Threats, Architecture. 50 timed questions.',url:'https://www.examcompass.com/comptia/security-plus-certification/free-security-plus-practice-tests'},
+{d:'Tue',t:'Revise Domains 3–4 + 50 practice Qs',det:'Implementation, Operations. 50 timed questions.',url:'https://www.examcompass.com/comptia/security-plus-certification/free-security-plus-practice-tests'},
+{d:'Wed',t:'Revise Domain 5 + 50 practice Qs',det:'Governance. 50 timed questions.',url:'https://www.examcompass.com/comptia/security-plus-certification/free-security-plus-practice-tests'},
+{d:'Thu',t:'Security+ mock exam — 90 questions timed',det:'90 questions in 90 minutes. Target 85%.',url:'https://www.examcompass.com/comptia/security-plus-certification/free-security-plus-practice-tests'},
+{d:'Fri',t:'Review wrong answers + weak domains only',det:'Only study what you got wrong. Do not re-read everything.',url:'https://www.professormesser.com/security-plus/sy0-701/sy0-701-video/sy0-701-comptia-security-plus-course/'},
+]},
+{label:'Week 42',topic:'SIT SECURITY+ EXAM this week',days:[
+{d:'Mon',t:'Light revision — performance-based Qs only',det:'Practice PBQs (drag and drop, matching). Do not overload.',url:'https://www.professormesser.com/security-plus/sy0-701/sy0-701-video/sy0-701-comptia-security-plus-course/'},
+{d:'Tue',t:'Rest + review exam-day logistics',det:'Check Pearson VUE test centre or online proctoring.',url:'https://home.pearsonvue.com/comptia'},
+{d:'Wed',t:'SIT YOUR SECURITY+ EXAM',det:'You have prepared for this. Trust your 10 months of work.',url:'https://home.pearsonvue.com/comptia'},
+{d:'Thu',t:'Post-exam: start CySA+ final revision',det:'Whether passed or not — continue forward.',url:'https://www.youtube.com/@professormesser'},
+{d:'Fri',t:'CySA+ 80 practice Qs — all domains',det:'Full timed CySA+ practice test.',url:'https://www.examcompass.com'},
+]},
+{label:'Week 43',topic:'CySA+ final preparation + exam',days:[
+{d:'Mon',t:'CySA+ weak domain revision',det:'Focus only on domains below 75% in practice tests.',url:'https://www.youtube.com/@professormesser'},
+{d:'Tue',t:'CySA+ mock exam — 85 questions timed',det:'Simulate exam conditions. Target 80%+.',url:'https://www.examcompass.com'},
+{d:'Wed',t:'CySA+ performance-based questions',det:'Practice scenario-based questions.',url:'https://www.professormesser.com'},
+{d:'Thu',t:'Final CySA+ revision — notes only',det:'Read your notes. No new content today.',url:'https://www.youtube.com/@professormesser'},
+{d:'Fri',t:'SIT YOUR CySA+ EXAM',det:'Book and sit CySA+ exam this week.',url:'https://home.pearsonvue.com/comptia'},
+]},
+{label:'Week 44',topic:'Aggressive job applications',days:[
+{d:'Mon',t:'Apply to 15 SOC analyst roles',det:'LinkedIn, Naukri, Indeed, company career pages.',url:'https://www.linkedin.com/jobs/'},
+{d:'Tue',t:'Reach out to 10 people on LinkedIn',det:'Message SOC managers, security leads, hiring managers.',url:'https://www.linkedin.com'},
+{d:'Wed',t:'Apply to 10 more roles',det:'Focus on IT companies, banks, consulting firms, MSSPs.',url:'https://www.naukri.com'},
+{d:'Thu',t:'Follow up on previous applications',det:'Email anyone who has not responded.',url:'https://www.linkedin.com'},
+{d:'Fri',t:'Refine CV based on job description patterns',det:'Match your CV language to most common requirements.',url:'https://github.com'},
+]},
+{label:'Week 45',topic:'Interview preparation',days:[
+{d:'Mon',t:'Technical: networking questions (20)',det:'Practice 20 networking questions out loud.',url:'https://github.com'},
+{d:'Tue',t:'Technical: IR scenario practice',det:'Practice: walk me through a ransomware alert response.',url:'https://github.com'},
+{d:'Wed',t:'Technical: Splunk / SIEM questions',det:'Practice: how would you detect lateral movement in Splunk?',url:'https://github.com'},
+{d:'Thu',t:'Behavioural: STAR method (5 stories)',det:'Prepare 5 STAR stories using your IT manager experience.',url:'https://github.com'},
+{d:'Fri',t:'Mock interview — record yourself on video',det:'Answer 10 questions on video. Watch and improve.',url:'https://github.com'},
+]},
+{label:'Week 46',topic:'Continue applications + networking',days:[
+{d:'Mon',t:'Apply to 15 more roles',det:'Keep volume high. Apply 1 level above and at your level.',url:'https://www.linkedin.com/jobs/'},
+{d:'Tue',t:'Prepare 5-minute portfolio walkthrough',det:'Demo your GitHub projects clearly and confidently.',url:'https://github.com'},
+{d:'Wed',t:'Research 20 target companies',det:'Find their security teams on LinkedIn.',url:'https://www.linkedin.com'},
+{d:'Thu',t:'Write cold outreach message template',det:'Professional message to security team leads.',url:'https://www.linkedin.com'},
+{d:'Fri',t:'Send 10 cold outreach messages',det:'To SOC managers at target companies. Personalise each one.',url:'https://www.linkedin.com'},
+]},
+{label:'Week 47',topic:'Final skills polish',days:[
+{d:'Mon',t:'Complete one more HackTheBox machine',det:'Document and upload write-up to GitHub.',url:'https://www.hackthebox.com'},
+{d:'Tue',t:'Complete one THM challenge room',det:'Pick any intermediate room. Add to portfolio.',url:'https://tryhackme.com'},
+{d:'Wed',t:'Update LinkedIn with cert badges',det:'Add Security+ and CySA+ to certifications section.',url:'https://www.linkedin.com'},
+{d:'Thu',t:'Request LinkedIn recommendations',det:'Ask ex-colleagues for recommendations on your IT work.',url:'https://www.linkedin.com'},
+{d:'Fri',t:'Review + celebrate your progress',det:'You went from IT Manager to certified cyber analyst. Keep going.',url:'https://github.com'},
+]},
+{label:'Week 48',topic:'Final week — land the job',days:[
+{d:'Mon',t:'Apply to 20 roles — final push',det:'Maximum volume. Entry + mid-level SOC and security analyst.',url:'https://www.linkedin.com/jobs/'},
+{d:'Tue',t:'Follow up on all open applications',det:'Email every company you applied to in last 4 weeks.',url:'https://www.linkedin.com'},
+{d:'Wed',t:'Prepare offer evaluation criteria',det:'Salary, role, growth, remote, tech stack — know your minimum.',url:'https://github.com'},
+{d:'Thu',t:'Final interview practice',det:'10 more technical + behavioural questions. You are ready.',url:'https://github.com'},
+{d:'Fri',t:'You have completed the 12-month plan',det:'Security+ done. CySA+ done. Portfolio done. Job hunt active. You did it.',url:'https://github.com'},
+]},
+]},
+];
+
+const SCRIPT_URL='https://script.google.com/macros/s/AKfycbw2k1uuZ152jDmmGRzs6mw0fTFs6GBmxNjB-NnrGb2-v1jLN66kLr-_EoGY_C9QYwWh/exec';
+const completed=JSON.parse(localStorage.getItem('cs_v4')||'{}');
+let cp=0,open={},syncState='idle';
+
+function totalDays(){return PHASES.reduce((s,p)=>s+p.weeks.reduce((a,w)=>a+w.days.length,0),0);}
+function doneCount(){return Object.values(completed).filter(Boolean).length;}
+function key(pi,wi,di){return `${pi}_${wi}_${di}`;}
+
+async function saveToSheet(k,pi,wi,di,done){
+  syncState='saving';render();
+  try{
+    const url=`${SCRIPT_URL}?action=set&key=${encodeURIComponent(k)}&phase=${pi}&week=${wi}&day=${di}&done=${done}`;
+    await Promise.race([fetch(url).then(r=>r.json()),new Promise((_,rej)=>setTimeout(()=>rej(),8000))]);
+    syncState='ok';
+  }catch(e){syncState='err';}
+  render();
+}
+
+async function loadFromSheet(){
+  syncState='loading';render();
+  try{
+    const data=await Promise.race([
+      fetch(SCRIPT_URL+'?action=getAll').then(r=>r.json()),
+      new Promise((_,rej)=>setTimeout(()=>rej(),8000))
+    ]);
+    Object.assign(completed,data||{});
+    localStorage.setItem('cs_v4',JSON.stringify(completed));
+    syncState='ok';
+  }catch(e){syncState='err';}
+  render();
+}
+
+async function toggleDone(pi,wi,di,e){
+  e.stopPropagation();
+  const k=key(pi,wi,di);
+  completed[k]=!completed[k];
+  try{localStorage.setItem('cs_v4',JSON.stringify(completed));}catch(e2){}
+  await saveToSheet(k,pi,wi,di,completed[k]);
+}
+
+function toggleWeek(wi){
+  open[`${cp}_${wi}`]=!open[`${cp}_${wi}`];
+  render();
+}
+
+function render(){
+  const p=PHASES[cp];
+  const total=totalDays();
+  const done=doneCount();
+  const pct=Math.round(done/total*100);
+
+  const syncLabel=syncState==='loading'?'Loading from Google Sheets…':syncState==='saving'?'Saving to Google Sheets…':syncState==='ok'?'Synced to Google Sheets':syncState==='err'?'Offline — saved locally':'';
+  const syncColor=syncState==='ok'?'#3B6D11':syncState==='err'?'#BA7517':'#5f5e5a';
+  const syncBg=syncState==='ok'?'#eaf3de':syncState==='err'?'#faeeda':'#f5f5f0';
+  let h='<h1>Cybersecurity Analyst — 12 Month Plan</h1>';
+  h+='<div class="subtitle">Weekdays only · 1.5 hrs/day · 100% free resources · Network+ N10-009 → Security+ SY0-701 → CySA+</div>';
+  if(syncLabel) h+=`<div style="display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:4px 10px;border-radius:8px;margin-bottom:12px;background:${syncBg};color:${syncColor}"><span style="width:7px;height:7px;border-radius:50%;background:${syncColor};display:inline-block"></span>${syncLabel}</div>`;
+
+  h+=`<div class="progress-wrap">`;
+  h+=`<div class="progress-label"><span>${done} of ${total} days completed</span><span>${pct}%</span></div>`;
+  h+=`<div class="progress-track"><div class="progress-fill" style="width:${pct}%;background:${p.color}"></div></div>`;
+  h+=`</div>`;
+
+  h+=`<div class="top-bar">`;
+  PHASES.forEach((ph,i)=>{h+=`<span class="phase-pill ${ph.id}${i===cp?' active':''}" onclick="setPhase(${i})">${ph.label}</span>`;});
+  h+=`</div>`;
+
+  h+=`<div class="phase-hero" style="background:${p.bg};border-color:${p.color}33">`;
+  h+=`<div class="phase-hero-title" style="color:${p.color}">${p.name}</div>`;
+  h+=`<div class="phase-hero-meta" style="color:${p.tc}">${p.months}</div>`;
+  h+=`<div class="stats-row">`;
+  p.stats.forEach(s=>{h+=`<span class="stat-chip" style="background:${p.color}22;color:${p.tc}">${s}</span>`;});
+  h+=`</div></div>`;
+
+  h+=`<div class="weeks-grid">`;
+  p.weeks.forEach((w,wi)=>{
+    const isOpen=!!open[`${cp}_${wi}`];
+    const weekDone=w.days.filter((_,di)=>completed[key(cp,wi,di)]).length;
+    h+=`<div class="week-block">`;
+    h+=`<div class="week-header-row" onclick="toggleWeek(${wi})">`;
+    h+=`<div><div class="week-title">${w.label} — ${w.topic}</div>`;
+    h+=`<div class="week-subtitle">${weekDone}/${w.days.length} days done</div></div>`;
+    h+=`<span class="week-toggle">${isOpen?'▲':'▼'}</span>`;
+    h+=`</div>`;
+    h+=`<div class="days-list${isOpen?' open':''}">`;
+    w.days.forEach((d,di)=>{
+      const k=key(cp,wi,di);
+      const isDone=!!completed[k];
+      h+=`<div class="day-item" style="opacity:${isDone?0.5:1}">`;
+      h+=`<div class="day-label">${d.d}</div>`;
+      h+=`<div><div class="day-topic">${d.t}</div><div class="day-detail">${d.det}</div>`;
+      h+=`<a class="day-link" href="${d.url}" target="_blank">Open resource →</a></div>`;
+      h+=`<div><button class="done-btn${isDone?' done':''}" onclick="toggleDone(${cp},${wi},${di},event)">${isDone?'Done':'Mark done'}</button></div>`;
+      h+=`</div>`;
+    });
+    h+=`</div></div>`;
+  });
+  h+=`</div>`;
+
+  document.getElementById('app').innerHTML=h;
+}
+
+function setPhase(i){cp=i;open={};render();}
+loadFromSheet();
+</script>
+<script>
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+</script>
+</body>
+</html>
