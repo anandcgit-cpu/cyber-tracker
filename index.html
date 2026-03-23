@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Cyber Tracker</title>
+<meta name="theme-color" content="#534AB7">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#f5f5f0;color:#1a1a18;padding:16px;min-height:100vh}
+#app{max-width:680px;margin:0 auto;background:#fff;border-radius:14px;padding:18px;border:0.5px solid #d3d1c7}
+h1{font-size:17px;font-weight:500;margin-bottom:3px}
+.sub{font-size:11px;color:#888;margin-bottom:14px}
+.phases{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.ph{padding:4px 11px;border-radius:99px;font-size:11px;font-weight:500;cursor:pointer;border:1.5px solid transparent}
+.ph.on{border-color:currentColor}
+.hero{border-radius:10px;padding:12px 14px;margin-bottom:12px}
+.hero-t{font-size:14px;font-weight:500;margin-bottom:2px}
+.hero-s{font-size:11px;opacity:.7;margin-bottom:8px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font-size:10px;padding:2px 8px;border-radius:99px;font-weight:500}
+.prog{margin-bottom:14px}
+.prog-l{font-size:11px;color:#888;margin-bottom:4px;display:flex;justify-content:space-between}
+.prog-t{background:#eee;border-radius:99px;height:4px;overflow:hidden}
+.prog-f{height:100%;border-radius:99px;transition:width .3s}
+.weeks{display:flex;flex-direction:column;gap:5px}
+.wk{border-radius:9px;overflow:hidden;border:0.5px solid #ddd}
+.wk-h{display:flex;justify-content:space-between;align-items:center;padding:8px 11px;background:#f8f8f6;cursor:pointer}
+.wk-t{font-size:12px;font-weight:500}
+.wk-s{font-size:10px;color:#888}
+.days{display:none;flex-direction:column}
+.days.open{display:flex}
+.day{padding:9px 11px;border-top:0.5px solid #eee}
+.day-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}
+.day-l{font-size:11px;font-weight:500}
+.btn{font-size:10px;padding:2px 9px;border-radius:99px;border:0.5px solid #ccc;background:transparent;cursor:pointer;color:#666}
+.btn.done{background:#eaf3de;color:#3B6D11;border-color:#639922}
+.slots{display:flex;flex-direction:column;gap:5px}
+.slot{display:grid;grid-template-columns:52px 1fr;gap:7px}
+.sb{font-size:10px;padding:2px 5px;border-radius:99px;text-align:center;font-weight:500;line-height:1.5}
+.st{font-size:11px;font-weight:500;margin-bottom:1px}
+.sd{font-size:10px;color:#666;line-height:1.4}
+.sl a{color:#185FA5;font-size:10px;text-decoration:none}
+.tot{font-size:10px;color:#aaa;margin-top:6px;padding-top:5px;border-top:0.5px dashed #eee}
+.sync{display:inline-flex;align-items:center;gap:4px;font-size:10px;padding:3px 9px;border-radius:8px;margin-bottom:10px}
+@media(prefers-color-scheme:dark){
+  body{background:#1a1a18;color:#e8e6e0}
+  #app{background:#2c2c2a;border-color:#444}
+  .wk{border-color:#444}.wk-h,.prog-t{background:#3a3a38}
+  .day{border-top-color:#444}.sd,.wk-s{color:#999}
+  .tot{border-top-color:#444;color:#777}
+  h1{color:#e8e6e0}
+}
+</style>
+</head>
+<body>
+<div id="app">Loading...</div>
+<script src="p1.js"></script>
+<script src="p2.js"></script>
+<script src="p3.js"></script>
+<script src="p4.js"></script>
+<script src="p5.js"></script>
+<script src="p6.js"></script>
+<script>
+const SU='https://script.google.com/macros/s/AKfycbw2k1uuZ152jDmmGRzs6mw0fTFs6GBmxNjB-NnrGb2-v1jLN66kLr-_EoGY_C9QYwWh/exec';
+const done=JSON.parse(localStorage.getItem('cy6')||'{}');
+let cp=0,op={},ss='idle';
+
+function jsonp(url){
+  return new Promise((res,rej)=>{
+    const cb='_cb'+Date.now();
+    const s=document.createElement('script');
+    const t=setTimeout(()=>{rej();delete window[cb];s.remove();},7000);
+    window[cb]=(d)=>{clearTimeout(t);res(d);delete window[cb];s.remove();};
+    s.onerror=()=>{clearTimeout(t);rej();delete window[cb];};
+    s.src=url+(url.includes('?')?'&':'?')+'callback='+cb;
+    document.head.appendChild(s);
+  });
+}
+
+async function tog(pi,wi,di,e){
+  e.stopPropagation();
+  const k=pi+'_'+wi+'_'+di;
+  done[k]=!done[k];
+  localStorage.setItem('cy6',JSON.stringify(done));
+  ss='saving';draw();
+  try{await jsonp(SU+'?action=set&key='+encodeURIComponent(k)+'&done='+done[k]);ss='ok';}
+  catch(e){ss='err';}
+  draw();
+}
+
+function togW(wi){op[cp+'_'+wi]=!op[cp+'_'+wi];draw();}
+
+function key(pi,wi,di){return pi+'_'+wi+'_'+di;}
+
+function draw(){
+  const P=window.PH;
+  if(!P){document.getElementById('app').innerHTML='<div style="padding:20px;color:red">Data not loaded. Please refresh.</div>';return;}
+  const p=P[cp];
+  const tot=P.reduce((s,x)=>s+x.w.reduce((a,w)=>a+w.d.length,0),0);
+  const dn=Object.values(done).filter(Boolean).length;
+  const pct=Math.round(dn/tot*100);
+  const sl=ss==='saving'?'Saving…':ss==='ok'?'✓ Synced':ss==='err'?'Offline — saved locally':'';
+  const sc=ss==='ok'?'#3B6D11':ss==='err'?'#BA7517':'#888';
+  const sbg=ss==='ok'?'#eaf3de':ss==='err'?'#faeeda':'#f5f5f0';
+
+  let h='<h1>Cybersecurity Analyst — 12 Month Plan</h1>';
+  h+='<div class="sub">Mon–Fri · 90 min/day · Watch+Read+Lab+Notes · Free · 240 days</div>';
+  if(sl) h+=`<div class="sync" style="background:${sbg};color:${sc}"><span style="width:6px;height:6px;border-radius:50%;background:${sc};display:inline-block"></span>${sl}</div>`;
+  h+=`<div class="prog"><div class="prog-l"><span>${dn} of ${tot} days done</span><span>${pct}%</span></div><div class="prog-t"><div class="prog-f" style="width:${pct}%;background:${p.c}"></div></div></div>`;
+  h+='<div class="phases">';
+  P.forEach((x,i)=>h+=`<span class="ph${i===cp?' on':''}" style="background:${x.bg};color:${x.tc}" onclick="cp=${i};op={};draw()">${x.l}</span>`);
+  h+='</div>';
+  h+=`<div class="hero" style="background:${p.bg};border:1px solid ${p.c}33">`;
+  h+=`<div class="hero-t" style="color:${p.c}">${p.n}</div>`;
+  h+=`<div class="hero-s" style="color:${p.tc}">${p.m}</div>`;
+  h+=`<div class="chips">${p.s.map(x=>`<span class="chip" style="background:${p.c}22;color:${p.tc}">${x}</span>`).join('')}</div>`;
+  h+='</div><div class="weeks">';
+
+  p.w.forEach((w,wi)=>{
+    const isO=!!op[cp+'_'+wi];
+    const wd=w.d.filter((_,di)=>done[key(cp,wi,di)]).length;
+    h+=`<div class="wk"><div class="wk-h" onclick="togW(${wi})">`;
+    h+=`<div><div class="wk-t">${w.l} — ${w.t}</div><div class="wk-s">${wd}/${w.d.length} days done</div></div>`;
+    h+=`<span style="font-size:10px;color:#aaa">${isO?'▲':'▼'}</span></div>`;
+    h+=`<div class="days${isO?' open':''}">`;
+    w.d.forEach((d,di)=>{
+      const k=key(cp,wi,di);
+      const isd=!!done[k];
+      h+=`<div class="day" style="opacity:${isd?.55:1}">`;
+      h+=`<div class="day-h"><span class="day-l">${d.day}</span><button class="btn${isd?' done':''}" onclick="tog(${cp},${wi},${di},event)">${isd?'Done ✓':'Mark done'}</button></div>`;
+      h+='<div class="slots">';
+      [['Watch 20m','#EEEDFE','#3C3489',d.w,d.wl,d.wi],
+       ['Read 20m','#E6F1FB','#042C53',d.r,d.rl,d.ri],
+       ['Lab 35m','#E1F5EE','#085041',d.b,d.bl,d.bi],
+       ['Notes 15m','#FAEEDA','#633806',d.n,d.nl,d.ni]
+      ].forEach(([label,bg,tc,text,link,instr])=>{
+        h+=`<div class="slot"><span class="sb" style="background:${bg};color:${tc}">${label}</span>`;
+        h+=`<div class="sl"><div class="st">${text}</div>`;
+        if(instr) h+=`<div class="sd">${instr}</div>`;
+        h+=`<a href="${link}" target="_blank">Open resource →</a></div></div>`;
+      });
+      h+='</div><div class="tot">90 min total · Watch 20m · Read 20m · Lab 35m · Notes 15m</div></div>';
+    });
+    h+='</div></div>';
+  });
+  h+='</div>';
+  document.getElementById('app').innerHTML=h;
+}
+
+window.addEventListener('load',()=>{
+  if(window.PH){ss='idle';draw();}
+  else{
+    ss='idle';
+    const chk=setInterval(()=>{if(window.PH){clearInterval(chk);draw();}},100);
+    setTimeout(()=>{clearInterval(chk);if(!window.PH){document.getElementById('app').innerHTML='<div style="padding:20px;color:red">Error: data files not loaded. Check p1.js through p6.js are in your repo.</div>';}},5000);
+  }
+});
+</script>
+<script>
+
+</script>
+</body>
+</html>
